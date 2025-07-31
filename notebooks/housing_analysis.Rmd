@@ -13,6 +13,8 @@ output:
     number_sections: true
     fig_caption: true
     keep_tex: true
+    citation_package: biblatex
+bibliography: "../data/resources/references.bib"
 documentclass: jlreq
 classoption: [paper=a4paper,fontsize=11pt]
 ---
@@ -48,7 +50,7 @@ housing_data <- read_csv(here("data", "processed", "housing_data_processed.csv")
 
 # はじめに
 
-本レポートでは、住宅価格（家賃）に影響を与える要因について分析を行います。分析対象は`r nrow(housing_data)`件の住宅データで、家賃を目的変数として、広さ、駅からの距離、築年数、部屋数、周辺の緑地面積、二重窓の有無を説明変数とした重回帰分析を実施します。
+本レポートでは、住宅価格（家賃）に影響を与える要因について分析を行う。分析対象は`r nrow(housing_data)`件の住宅データで、家賃を目的変数として、広さ、駅からの距離、築年数、部屋数、周辺の緑地面積、二重窓の有無を説明変数とした重回帰分析を実施する[@regression_explanation_1981]。分析手法のベースとして、本リポジトリの統計分析テンプレートを参照している[@rstudio_analysis_template]。
 
 # データの概要
 
@@ -86,7 +88,7 @@ kable(desc_stats,
       booktabs = TRUE)
 ```
 
-データは`r nrow(housing_data)`件の住宅物件から構成されています。家賃の平均は`r format(round(mean(housing_data$家賃)), big.mark=",")`円、範囲は`r format(min(housing_data$家賃), big.mark=",")`円から`r format(max(housing_data$家賃), big.mark=",")`円となっています。
+データは`r nrow(housing_data)`件の住宅物件から構成されている。家賃の平均は`r format(round(mean(housing_data$家賃)), big.mark=",")`円、範囲は`r format(min(housing_data$家賃), big.mark=",")`円から`r format(max(housing_data$家賃), big.mark=",")`円となっている。
 
 ## 家賃と駅からの距離の関係
 
@@ -111,7 +113,7 @@ ggplot(housing_data, aes(x = 駅距離, y = 家賃)) +
   )
 ```
 
-グラフから、家賃と駅からの距離には明確な負の相関関係が確認できます。駅から遠くなるほど家賃が低くなる傾向があり、相関係数はr = `r round(cor(housing_data$家賃, housing_data$駅距離), 3)`でした。これは交通の便利性が家賃に大きく影響していることを示しています。
+グラフから、家賃と駅からの距離には明確な負の相関関係が確認できる。駅から遠くなるほど家賃が低くなる傾向があり、相関係数はr = `r round(cor(housing_data$家賃, housing_data$駅距離), 3)`である。これは交通の便利性が家賃に大きく影響していることを示している。
 
 # 重回帰分析
 
@@ -171,7 +173,7 @@ p_value_model <- round(model_stats$p.value, 4)
 
 ## 結果の解釈
 
-重回帰分析の結果、以下の知見が得られました：
+重回帰分析の結果、以下の知見が得られた：
 
 **モデルの適合度：**
 
@@ -179,7 +181,7 @@ p_value_model <- round(model_stats$p.value, 4)
 - 修正済み決定係数: `r adj_r_squared`
 - F統計量: `r f_statistic` (p < 0.001)
 
-モデル全体として統計的に有意であり、家賃の変動の約`r round(r_squared*100, 1)`%を説明しています。
+モデル全体として統計的に有意であり、家賃の変動の約`r round(r_squared*100, 1)`%を説明している。
 
 **各変数の影響：**
 
@@ -199,6 +201,6 @@ p_value_model <- round(model_stats$p.value, 4)
 
 # まとめ
 
-本分析により、住宅の家賃決定において、物理的な広さ、立地の利便性、物件の新しさ、および設備の質が主要な要因であることが明らかになりました。一方で、部屋数や周辺の緑地面積は、他の要因を考慮すると家賃への直接的な影響は限定的であることが示されました。
+本分析により、住宅の家賃決定において、物理的な広さ、立地の利便性、物件の新しさ、および設備の質が主要な要因であることが明らかになった。一方で、部屋数や周辺の緑地面積は、他の要因を考慮すると家賃への直接的な影響は限定的であることが示された。
 
-これらの結果は、不動産市場における価格形成メカニズムの理解に貢献し、物件評価や投資判断の参考となる重要な知見を提供しています。
+これらの結果は、不動産市場における価格形成メカニズムの理解に貢献し、物件評価や投資判断の参考となる重要な知見を提供している[@regression_explanation_1981]。

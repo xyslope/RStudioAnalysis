@@ -71,7 +71,8 @@ if (requireNamespace("tinytex", quietly = TRUE)) {
       "geometry", "graphicx", "booktabs",
       "longtable", "array", "multirow", "multicol",
       "caption", "subcaption", "hyperref",
-      "listings", "xcolor"
+      "listings", "xcolor",
+      "biblatex", "biber", "etoolbox", "logreq"
     )
     
     # Get all installed packages at once (faster)
