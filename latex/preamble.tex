@@ -1,0 +1,67 @@
+% LaTeX preamble settings (LuaLaTeX + jlreq)
+% Usage: Add include-in-header: latex/preamble.tex to YAML header
+
+% documentclass is specified in YAML header
+
+\usepackage{luatexja}
+% \usepackage[paper=a4paper,margin=25mm]{geometry}  % Commented out - jlreq handles page layout
+
+% Font settings
+\usepackage{luatexja-fontspec}
+
+% System font settings (if available)
+\ifluatex
+  % Western fonts (use system defaults if not specified)
+  % \setmainfont{Times New Roman}
+  % \setsansfont{Arial}
+  % \setmonofont{Courier New}
+  
+  % Japanese fonts (use system defaults)
+  % LuaLaTeX will automatically select appropriate Japanese fonts
+  % \setmainjfont{...}
+  % \setsansjfont{...}
+\fi
+
+% Math fonts
+\usepackage{amsmath,amssymb}
+\usepackage{unicode-math}
+\setmathfont{Latin Modern Math}
+
+% Other packages
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+
+% Hyperlink settings
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  filecolor=magenta,
+  urlcolor=cyan,
+  citecolor=red,
+  pdftitle={},
+  pdfauthor={}
+}
+
+% Code block settings
+\usepackage{listings}
+\usepackage{xcolor}
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{gray!10},
+  frame=single,
+  breaklines=true,
+  showstringspaces=false,
+  commentstyle=\color{green!60!black},
+  keywordstyle=\color{blue},
+  stringstyle=\color{red}
+}
+
+% Japanese punctuation settings
+\ltjsetparameter{jacharrange={-2}}

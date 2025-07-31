@@ -1,0 +1,82 @@
+---
+title: "Research Paper Title"
+author: "Author Name"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: lualatex
+    template: null
+    includes:
+      in_header: !expr here::here("latex", "preamble.tex")
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    fig_caption: true
+    keep_tex: true
+documentclass: jlreq
+classoption: [paper=a4paper,fontsize=11pt]
+
+---
+
+# Introduction
+
+この文書をコピーしてレポート・論文を作成してください。
+日本語用に設定しています。上のfontsizeを11ptから12または10などに変えると、フォントサイズも変更できます。
+
+
+## Math Test
+Inline math: $E = mc^2$
+
+Display math:
+$$
+\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
+$$
+
+
+## Figures and Tables
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  fig.align = 'center',
+  fig.width = 8,
+  fig.height = 6,
+  dpi = 300
+)
+library(ggplot2)
+library(here)
+```
+
+```{r example-plot, fig.cap="Sample Plot"}
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point(alpha = 0.7, size = 3) +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +
+  labs(
+    x = "Weight (1000 lbs)", 
+    y = "Miles per gallon",
+    title = "Weight vs MPG"
+  ) +
+  theme_minimal()
+```
+
+## Table Example
+
+```{r example-table}
+library(knitr)
+
+mtcars_sample <- head(mtcars[, 1:6], 8)
+kable(
+  mtcars_sample, 
+  caption = "Sample of mtcars data",
+  digits = 2,
+  booktabs = TRUE
+)
+```
+
+## Path Management
+
+This template uses `here::here()` for absolute paths from project root.
+
+## Notes
+
+Using `template: null` disables R Markdown default template, allowing `documentclass: jlreq` to work properly.
