@@ -1,0 +1,204 @@
+---
+title: "住宅価格分析レポート"
+author: "分析者"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: lualatex
+    template: null
+    includes:
+      in_header: !expr here::here("latex", "preamble.tex")
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    fig_caption: true
+    keep_tex: true
+documentclass: jlreq
+classoption: [paper=a4paper,fontsize=11pt]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, 
+  message = FALSE,
+  warning = FALSE,
+  fig.align = 'center',
+  fig.width = 8,
+  fig.height = 6,
+  dpi = 300
+)
+
+# 必要なライブラリの読み込み
+library(here)
+library(tidyverse)
+library(knitr)
+library(corrplot)
+library(GGally)
+library(broom)
+library(scales)
+
+# 日本語列名の読み込み設定
+locale_jp <- locale(encoding = "UTF-8")
+
+# データの読み込み（前処理済み）
+source(here("R", "utils", "preprocess_data.R"))
+housing_data <- read_csv(here("data", "processed", "housing_data_processed.csv"), 
+                        locale = locale_jp, show_col_types = FALSE)
+```
+
+# はじめに
+
+本レポートでは、住宅価格（家賃）に影響を与える要因について分析を行います。分析対象は`r nrow(housing_data)`件の住宅データで、家賃を目的変数として、広さ、駅からの距離、築年数、部屋数、周辺の緑地面積、二重窓の有無を説明変数とした重回帰分析を実施します。
+
+# データの概要
+
+## 記述統計量
+
+```{r descriptive-stats}
+# 記述統計量の表を作成
+desc_stats <- housing_data %>%
+  select(-物件ID) %>%
+  pivot_longer(everything(), names_to = "変数", values_to = "値") %>%
+  group_by(変数) %>%
+  summarise(
+    平均 = round(mean(値), 2),
+    標準偏差 = round(sd(値), 2),
+    最小値 = round(min(値), 2),
+    最大値 = round(max(値), 2),
+    中央値 = round(median(値), 2),
+    .groups = 'drop'
+  ) %>%
+  mutate(
+    変数 = case_when(
+      変数 == "家賃" ~ "家賃（円）",
+      変数 == "広さ" ~ "広さ（㎡）",
+      変数 == "駅距離" ~ "駅距離（分）",
+      変数 == "築年数" ~ "築年数（年）",
+      変数 == "部屋数" ~ "部屋数",
+      変数 == "緑地面積" ~ "緑地面積（㎡）",
+      変数 == "二重窓" ~ "二重窓（0/1）",
+      TRUE ~ 変数
+    )
+  )
+
+kable(desc_stats, 
+      caption = "住宅データの記述統計量",
+      booktabs = TRUE)
+```
+
+データは`r nrow(housing_data)`件の住宅物件から構成されています。家賃の平均は`r format(round(mean(housing_data$家賃)), big.mark=",")`円、範囲は`r format(min(housing_data$家賃), big.mark=",")`円から`r format(max(housing_data$家賃), big.mark=",")`円となっています。
+
+## 家賃と駅からの距離の関係
+
+```{r rent-distance-plot, fig.cap="家賃と駅からの距離の関係"}
+# 家賃と駅距離のプロットを作成
+ggplot(housing_data, aes(x = 駅距離, y = 家賃)) +
+  geom_point(alpha = 0.7, size = 3, color = "steelblue") +
+  geom_smooth(method = "lm", se = TRUE, color = "red", linewidth = 1.2) +
+  labs(
+    x = "駅からの距離（分）", 
+    y = "家賃（円）",
+    title = "家賃と駅からの距離の関係"
+  ) +
+  scale_y_continuous(
+    labels = scales::comma_format(suffix = "円")
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)
+  )
+```
+
+グラフから、家賃と駅からの距離には明確な負の相関関係が確認できます。駅から遠くなるほど家賃が低くなる傾向があり、相関係数はr = `r round(cor(housing_data$家賃, housing_data$駅距離), 3)`でした。これは交通の便利性が家賃に大きく影響していることを示しています。
+
+# 重回帰分析
+
+## 分析結果
+
+```{r regression-analysis}
+# 重回帰分析の実行
+model <- lm(家賃 ~ 広さ + 駅距離 + 築年数 + 部屋数 + 緑地面積 + 二重窓, 
+            data = housing_data)
+
+# 回帰結果の表を作成
+model_summary <- tidy(model) %>%
+  mutate(
+    term = case_when(
+      term == "(Intercept)" ~ "切片",
+      term == "広さ" ~ "広さ（㎡）",
+      term == "駅距離" ~ "駅距離（分）",
+      term == "築年数" ~ "築年数（年）",
+      term == "部屋数" ~ "部屋数",
+      term == "緑地面積" ~ "緑地面積（㎡）",
+      term == "二重窓" ~ "二重窓",
+      TRUE ~ term
+    ),
+    有意性 = case_when(
+      p.value < 0.001 ~ "***",
+      p.value < 0.01 ~ "**",
+      p.value < 0.05 ~ "*",
+      p.value < 0.1 ~ ".",
+      TRUE ~ ""
+    )
+  ) %>%
+  select(変数 = term, 回帰係数 = estimate, 標準誤差 = std.error, 
+         t値 = statistic, p値 = p.value, 有意性)
+
+# 数値を適切な桁数で丸める
+model_summary <- model_summary %>%
+  mutate(
+    回帰係数 = round(回帰係数, 2),
+    標準誤差 = round(標準誤差, 2),
+    t値 = round(t値, 2),
+    p値 = round(p値, 4)
+  )
+
+kable(model_summary, 
+      caption = "重回帰分析の結果",
+      booktabs = TRUE)
+```
+
+```{r model-diagnostics}
+# モデルの適合度指標
+model_stats <- glance(model)
+r_squared <- round(model_stats$r.squared, 3)
+adj_r_squared <- round(model_stats$adj.r.squared, 3)
+f_statistic <- round(model_stats$statistic, 2)
+p_value_model <- round(model_stats$p.value, 4)
+```
+
+## 結果の解釈
+
+重回帰分析の結果、以下の知見が得られました：
+
+**モデルの適合度：**
+
+- 決定係数（R²）: `r r_squared`
+- 修正済み決定係数: `r adj_r_squared`
+- F統計量: `r f_statistic` (p < 0.001)
+
+モデル全体として統計的に有意であり、家賃の変動の約`r round(r_squared*100, 1)`%を説明しています。
+
+**各変数の影響：**
+
+1. **広さ（面積）**: 1㎡増加するごとに家賃が約`r abs(round(coef(model)["広さ"]))`円上昇（p < 0.001）
+2. **駅からの距離**: 駅から1分遠くなるごとに家賃が約`r abs(round(coef(model)["駅距離"]))`円減少（p < 0.001）
+3. **築年数**: 1年古くなるごとに家賃が約`r abs(round(coef(model)["築年数"]))`円減少（p < 0.001）
+4. **二重窓**: 二重窓がある場合、家賃が約`r round(coef(model)["二重窓"])`円上昇（p < 0.001）
+5. **部屋数**: 統計的に有意ではない（p > 0.05）
+6. **緑地面積**: 統計的に有意ではない（p > 0.05）
+
+**重要な発見：**
+
+- 住宅の広さが家賃に最も大きな影響を与える要因
+- 立地条件（駅距離）と物件の新しさ（築年数）も重要な決定要因
+- 二重窓などの設備も家賃に正の影響
+- 部屋数と緑地面積は予想に反して統計的に有意な影響を示さない
+
+# まとめ
+
+本分析により、住宅の家賃決定において、物理的な広さ、立地の利便性、物件の新しさ、および設備の質が主要な要因であることが明らかになりました。一方で、部屋数や周辺の緑地面積は、他の要因を考慮すると家賃への直接的な影響は限定的であることが示されました。
+
+これらの結果は、不動産市場における価格形成メカニズムの理解に貢献し、物件評価や投資判断の参考となる重要な知見を提供しています。
